@@ -4,7 +4,8 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "postinstall": "npm install git+https://github.com/Neetesh-Trivedi0028/microservice-c.git"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +15,7 @@
     "axios": "^1.7.7",
     "body-parser": "^1.20.3",
     "express": "^4.21.1",
+    "microservicec": "github:Neetesh-Trivedi0028/microservice-c",
     "mongoose": "^8.8.1"
   },
   "devDependencies": {

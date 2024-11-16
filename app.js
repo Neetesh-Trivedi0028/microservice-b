@@ -1,58 +1,64 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
-const axios = require('axios');
+const express = require("express");
+const { getUserModel, getOrderModel } = require('microservicec');
 
 const app = express();
+app.use(express.json());
 
-// Middleware
-app.use(bodyParser.json());
+const USER_DB_URI = "mongodb://localhost:27017/microserviceA";
+// const USER_DB_NAME = "";
+const ORDER_DB_URI = "mongodb://localhost:27017/microserviceB";
+// const ORDER_DB_NAME = "";
 
-// MongoDB connection
-mongoose.connect('mongodb://localhost:27017/microserviceB', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => console.log('Microservice B: Connected to MongoDB'));
-
-// Order Schema and Model
-const orderSchema = new mongoose.Schema({
-    orderNumber: String,
-    userId: String, // Reference to User in Microservice A
-    date: Date
-});
-
-const Order = mongoose.model('Order', orderSchema);
-
-// Routes
-app.post('/orders', async (req, res) => {
+// create sample data
+app.get("/create-users", async (req, res) => {
     try {
-        const { orderNumber, userId, date } = req.body;
-
-        // Validate userId with Microservice A
-        const userResponse = await axios.get(`http://localhost:3001/users/${userId}`);
-        if (!userResponse.data) return res.status(404).json({ message: 'User not found in Microservice A' });
-
-        // Create the order
-        const order = new Order({ orderNumber, userId, date });
-        await order.save();
-        res.status(201).json(order);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
+        const User = await getUserModel(USER_DB_URI);
+        const users = new User({
+            name: "Neetesh Trivedi",
+            email: "neetesh@yopmail.com",
+            gender: "Male",
+            address: "abc address",
+        });
+        const data = await users.save();
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+app.get("/users", async (req, res) => {
+    try {
+        const User = await getUserModel(USER_DB_URI);
+        const users = await User.find({});
+        res.json(users);
+    } catch (error) {
+        console.log("check error ", error);
+        res.status(500).json({ error: error.message });
     }
 });
 
-app.get('/orders/:id', async (req, res) => {
-    try {
-        const order = await Order.findById(req.params.id);
-        if (!order) return res.status(404).json({ message: 'Order not found' });
 
-        // Fetch user details from Microservice A
-        const userResponse = await axios.get(`http://localhost:3001/users/${order.userId}`);
-        res.json({ order, user: userResponse.data });
-    } catch (err) {
-        res.status(400).json({ message: err.message });
+// create sample data 
+app.get("/create-order", async (req, res) => {
+    try {
+        const Order = await getOrderModel(ORDER_DB_URI);
+        const order = new Order({
+            orderNumber: "some order number",
+            userId: "6738b5f91d54fa40ae659a86"
+        });
+        const data = await order.save();
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+app.get("/orders", async (req, res) => {
+    try {
+        const Order = await getOrderModel(ORDER_DB_URI);
+        const orders = await Order.find({});
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
-const PORT = 3002;
-app.listen(PORT, () => console.log(`Microservice B running on port ${PORT}`));
+app.listen(3000, () => console.log("Server running on port 3000"));
